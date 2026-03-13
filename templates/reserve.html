@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Reservation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <h1 class="logo">Smart Parking</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('slot_bp.list_slots') }}">Slots</a></li>
+                    <li><a href="{{ url_for('reservation_bp.create_reservation') }}" class="active">Reserve</a></li>
+                    <li><a href="{{ url_for('reservation_bp.list_bookings') }}">Bookings</a></li>
+                    {% if is_admin %}
+                        <li><a href="{{ url_for('admin_bp.manage_slots') }}">Admin</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('auth_bp.logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h2>Create Reservation</h2>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        {% if recommended_slot %}
+            <section class="card recommendation-box">
+                <h3>Recommended Slot</h3>
+                <p>
+                    Suggested slot:
+                    <strong>{{ recommended_slot.slot_number }}</strong>
+                    (Zone {{ recommended_slot.zone }}, {{ recommended_slot.slot_type|capitalize }})
+                </p>
+            </section>
+        {% endif %}
+
+        <section class="form-card">
+            <form method="POST" class="main-form">
+                {% if is_admin %}
+                <div class="form-group">
+                    <label for="user_id">Select User</label>
+                    <select name="user_id" id="user_id" required>
+                        <option value="">Choose user</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="slot_id">Select Slot</label>
+                    <select name="slot_id" id="slot_id" required>
+                        <option value="">Choose parking slot</option>
+                        {% for slot in slots %}
+                            <option value="{{ slot.id }}">
+                                {{ slot.slot_number }} - Zone {{ slot.zone }} - {{ slot.slot_type|capitalize }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="vehicle_number">Vehicle Number</label>
+                    <input type="text" name="vehicle_number" id="vehicle_number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservation_start">Reservation Start</label>
+                    <input type="datetime-local" name="reservation_start" id="reservation_start" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reservation_end">Reservation End</label>
+                    <input type="datetime-local" name="reservation_end" id="reservation_end" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="receipt_url">Receipt URL (Optional)</label>
+                    <input type="url" name="receipt_url" id="receipt_url">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Reservation</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

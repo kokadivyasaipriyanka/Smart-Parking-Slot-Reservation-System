@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <h1 class="logo">Smart Parking</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('admin_bp.manage_slots') }}">Slots</a></li>
+                    <li><a href="{{ url_for('admin_bp.manage_users') }}" class="active">Users</a></li>
+                    <li><a href="{{ url_for('auth_bp.logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h2>Admin User Management</h2>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="form-card">
+            <h3>{% if edit_user %}Edit User{% else %}Add New User{% endif %}</h3>
+
+            <form
+                method="POST"
+                action="{% if edit_user %}{{ url_for('admin_bp.edit_user', user_id=edit_user.id) }}{% else %}{{ url_for('admin_bp.manage_users') }}{% endif %}"
+                class="main-form"
+            >
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" value="{{ edit_user.full_name if edit_user else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ edit_user.email if edit_user else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" value="{{ edit_user.phone if edit_user else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Password {% if edit_user %}(leave blank to keep old password){% endif %}</label>
+                    <input type="password" name="password" {% if not edit_user %}required{% endif %}>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="is_admin" {% if edit_user and edit_user.is_admin %}checked{% endif %}>
+                        Is Admin
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{% if edit_user %}Update User{% else %}Add User{% endif %}</button>
+                    {% if edit_user %}
+                        <a href="{{ url_for('admin_bp.manage_users') }}" class="btn btn-secondary">Cancel Edit</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <section class="table-card">
+            {% if users %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Role</th>
+                                <th>Edit</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or '-' }}</td>
+                                    <td>{{ 'Admin' if user.is_admin else 'User' }}</td>
+                                    <td>
+                                        <a class="btn btn-small btn-outline" href="{{ url_for('admin_bp.edit_user', user_id=user.id) }}">Edit</a>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-small btn-danger" href="{{ url_for('admin_bp.delete_user', user_id=user.id) }}" onclick="return confirm('Delete this user?')">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No users found.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

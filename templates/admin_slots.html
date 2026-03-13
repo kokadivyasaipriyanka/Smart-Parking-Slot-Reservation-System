@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Slots</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <h1 class="logo">Smart Parking</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('slot_bp.list_slots') }}">Slots</a></li>
+
+                    {% if is_logged_in %}
+                        <li><a href="{{ url_for('reservation_bp.create_reservation') }}">Reserve</a></li>
+                        <li><a href="{{ url_for('reservation_bp.list_bookings') }}">Bookings</a></li>
+
+                        {% if is_admin %}
+                            <li><a href="{{ url_for('admin_bp.manage_slots') }}">Admin Slots</a></li>
+                            <li><a href="{{ url_for('admin_bp.manage_users') }}">Admin Users</a></li>
+                        {% endif %}
+
+                        <li><a href="{{ url_for('auth_bp.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth_bp.login') }}">Login</a></li>
+                        <li><a href="{{ url_for('auth_bp.register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h2>Admin Slot Management</h2>
+            <p>Add new parking slots or manage existing ones.</p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="form-card">
+            <h3>{% if edit_slot %}Edit Slot{% else %}Add New Slot{% endif %}</h3>
+            <form
+                method="POST"
+                action="{% if edit_slot %}{{ url_for('admin_bp.edit_slot', slot_id=edit_slot.id) }}{% else %}{{ url_for('admin_bp.manage_slots') }}{% endif %}"
+                class="main-form"
+            >
+                <div class="form-group">
+                    <label for="slot_number">Slot Number</label>
+                    <input
+                        type="text"
+                        name="slot_number"
+                        id="slot_number"
+                        value="{{ edit_slot.slot_number if edit_slot else '' }}"
+                        placeholder="e.g. A-101"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="zone">Zone</label>
+                    <input
+                        type="text"
+                        name="zone"
+                        id="zone"
+                        value="{{ edit_slot.zone if edit_slot else '' }}"
+                        placeholder="e.g. A"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="slot_type">Slot Type</label>
+                    <select name="slot_type" id="slot_type" required>
+                        <option value="">Choose slot type</option>
+                        <option value="bike" {% if edit_slot and edit_slot.slot_type == 'bike' %}selected{% endif %}>Bike</option>
+                        <option value="car" {% if edit_slot and edit_slot.slot_type == 'car' %}selected{% endif %}>Car</option>
+                        <option value="compact" {% if edit_slot and edit_slot.slot_type == 'compact' %}selected{% endif %}>Compact</option>
+                        <option value="standard" {% if edit_slot and edit_slot.slot_type == 'standard' %}selected{% endif %}>Standard</option>
+                        <option value="large" {% if edit_slot and edit_slot.slot_type == 'large' %}selected{% endif %}>Large</option>
+                        <option value="electric" {% if edit_slot and edit_slot.slot_type == 'electric' %}selected{% endif %}>Electric</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" required>
+                        <option value="available" {% if edit_slot and edit_slot.status == 'available' %}selected{% endif %}>Available</option>
+                        <option value="occupied" {% if edit_slot and edit_slot.status == 'occupied' %}selected{% endif %}>Occupied</option>
+                        <option value="maintenance" {% if edit_slot and edit_slot.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        {% if edit_slot %}Update Slot{% else %}Add Slot{% endif %}
+                    </button>
+                    {% if edit_slot %}
+                        <a href="{{ url_for('admin_bp.manage_slots') }}" class="btn btn-secondary">Cancel Edit</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <section class="table-card">
+            {% if slots %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Slot Number</th>
+                                <th>Zone</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Edit</th>
+                                <th>Delete</th>
+                                <th>Quick Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in slots %}
+                                <tr>
+                                    <td>{{ slot.id }}</td>
+                                    <td>{{ slot.slot_number }}</td>
+                                    <td>{{ slot.zone }}</td>
+                                    <td>{{ slot.slot_type|capitalize }}</td>
+                                    <td><span class="badge badge-{{ slot.status }}">{{ slot.status|capitalize }}</span></td>
+                                    <td>
+                                        <a class="btn btn-small btn-outline" href="{{ url_for('admin_bp.edit_slot', slot_id=slot.id) }}">Edit</a>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-small btn-danger" href="{{ url_for('admin_bp.delete_slot', slot_id=slot.id) }}" onclick="return confirmDelete('Are you sure you want to delete this slot?')">Delete</a>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin_bp.update_slot_status', slot_id=slot.id) }}" class="inline-form">
+                                            <select name="status">
+                                                <option value="available" {% if slot.status == 'available' %}selected{% endif %}>Available</option>
+                                                <option value="reserved" {% if slot.status == 'reserved' %}selected{% endif %}>Reserved</option>
+                                                <option value="occupied" {% if slot.status == 'occupied' %}selected{% endif %}>Occupied</option>
+                                                <option value="maintenance" {% if slot.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-small btn-secondary">Update</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No parking slots available yet.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Smart Parking Slot Reservation System</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Slots</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <h1 class="logo">Smart Parking</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('slot_bp.list_slots') }}">Slots</a></li>
+
+                    {% if is_logged_in %}
+                        <li><a href="{{ url_for('reservation_bp.create_reservation') }}">Reserve</a></li>
+                        <li><a href="{{ url_for('reservation_bp.list_bookings') }}">Bookings</a></li>
+
+                        {% if is_admin %}
+                            <li><a href="{{ url_for('admin_bp.manage_slots') }}">Admin Slots</a></li>
+                            <li><a href="{{ url_for('admin_bp.manage_users') }}">Admin Users</a></li>
+                        {% endif %}
+
+                        <li><a href="{{ url_for('auth_bp.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth_bp.login') }}">Login</a></li>
+                        <li><a href="{{ url_for('auth_bp.register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h2>Parking Slots</h2>
+            <p>Browse all parking slots and filter by zone or status.</p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <form method="GET" action="{{ url_for('slot_bp.list_slots') }}" class="filter-form">
+                <div class="form-group">
+                    <label for="zone">Zone</label>
+                    <select id="zone" name="zone">
+                        <option value="">All Zones</option>
+                        {% for zone in unique_zones %}
+                            <option value="{{ zone }}" {% if selected_zone == zone %}selected{% endif %}>{{ zone }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="">All Status</option>
+                        {% for status in unique_statuses %}
+                            <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    <a href="{{ url_for('slot_bp.list_slots') }}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="table-card">
+            {% if slots %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Slot Number</th>
+                                <th>Zone</th>
+                                <th>Slot Type</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in slots %}
+                                <tr>
+                                    <td>{{ slot.id }}</td>
+                                    <td>{{ slot.slot_number }}</td>
+                                    <td>{{ slot.zone }}</td>
+                                    <td>{{ slot.slot_type|capitalize }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ slot.status|lower }}">{{ slot.status|capitalize }}</span>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-small btn-outline" href="{{ url_for('slot_bp.slot_details', slot_id=slot.id) }}">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No parking slots found.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Smart Parking Slot Reservation System</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

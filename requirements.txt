@@ -1,0 +1,7 @@
+Flask
+boto3
+psycopg2-binary
+python-dotenv
+Werkzeug
+gunicorn
+parking-availability-library==0.1.0

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title or 'Bookings' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <h1 class="logo">Smart Parking</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('slot_bp.list_slots') }}">Slots</a></li>
+
+                    {% if is_logged_in %}
+                        <li><a href="{{ url_for('reservation_bp.create_reservation') }}">Reserve</a></li>
+                        <li><a href="{{ url_for('reservation_bp.list_bookings') }}" class="active">Bookings</a></li>
+
+                        {% if is_admin %}
+                            <li><a href="{{ url_for('admin_bp.manage_slots') }}">Admin Slots</a></li>
+                            <li><a href="{{ url_for('admin_bp.manage_users') }}">Admin Users</a></li>
+                        {% endif %}
+
+                        <li><a href="{{ url_for('auth_bp.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth_bp.login') }}">Login</a></li>
+                        <li><a href="{{ url_for('auth_bp.register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <h2>{{ page_title or 'Bookings' }}</h2>
+            {% if slot %}
+                <p>Showing reservation history for slot <strong>{{ slot.slot_number }}</strong>.</p>
+            {% else %}
+                <p>
+                    {% if is_admin %}
+                        View and manage all parking reservations.
+                    {% else %}
+                        View and manage your parking reservations.
+                    {% endif %}
+                </p>
+            {% endif %}
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="table-card">
+            {% if bookings %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+
+                                {% if is_admin %}
+                                    <th>User</th>
+                                    <th>Email</th>
+                                {% endif %}
+
+                                <th>Slot</th>
+                                <th>Zone</th>
+                                <th>Vehicle Number</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                                <th>Edit</th>
+                                <th>Cancel</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td>{{ booking.id }}</td>
+
+                                    {% if is_admin %}
+                                        <td>{{ booking.user_name if booking.user_name is defined else '-' }}</td>
+                                        <td>{{ booking.user_email if booking.user_email is defined else '-' }}</td>
+                                    {% endif %}
+
+                                    <td>{{ booking.slot_number if booking.slot_number is defined else booking.slot_id }}</td>
+                                    <td>{{ booking.zone if booking.zone is defined else '-' }}</td>
+                                    <td>{{ booking.vehicle_number }}</td>
+
+                                    <td>
+                                        {% if booking.reservation_start %}
+                                            {{ booking.reservation_start.strftime('%Y-%m-%d %H:%M') if booking.reservation_start.strftime is defined else booking.reservation_start }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if booking.reservation_end %}
+                                            {{ booking.reservation_end.strftime('%Y-%m-%d %H:%M') if booking.reservation_end.strftime is defined else booking.reservation_end }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <span class="badge badge-{{ booking.display_status|lower }}">{{ booking.display_status|capitalize }}</span>
+                                    </td>
+
+                                    <td>
+                                        {% if booking.receipt_download_url %}
+                                            <a class="btn btn-small btn-outline" href="{{ booking.receipt_download_url }}" target="_blank">Open</a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <a class="btn btn-small btn-outline" href="{{ url_for('reservation_bp.edit_reservation', reservation_id=booking.id) }}">Edit</a>
+                                    </td>
+
+                                    <td>
+                                        <a class="btn btn-small btn-warning" href="{{ url_for('reservation_bp.cancel_reservation', reservation_id=booking.id) }}" onclick="return confirmDelete('Are you sure you want to cancel this reservation?')">Cancel</a>
+                                    </td>
+
+                                    <td>
+                                        <a class="btn btn-small btn-danger" href="{{ url_for('reservation_bp.delete_reservation', reservation_id=booking.id) }}" onclick="return confirmDelete('Are you sure you want to delete this reservation?')">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No reservations found.</p>
+                    <a href="{{ url_for('reservation_bp.create_reservation') }}" class="btn btn-primary">Create Reservation</a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Smart Parking Slot Reservation System</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
